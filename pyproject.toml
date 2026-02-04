@@ -1,0 +1,7 @@
+[project]
+name = "hera-care"
+version = "0.1.0"
+description = "Health is the most valuable asset each person has! And that is the ultimate goal of this project."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
