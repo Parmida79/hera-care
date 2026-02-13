@@ -4,10 +4,10 @@ from typing import Optional
 from sqlalchemy import ForeignKey, Enum, Text, func
 from sqlalchemy.orm import Mapped
 
-from hera_care.db.database import Base
-from hera_care.models import mapped_column
-from hera_care.utils.enums import DiseaseSeverity, PatientDiseaseStatus
-from hera_care.utils.mixins import AutoActivationMixin, ModifiedMixin
+from app.db.database import Base
+from app.models import mapped_column
+from app.utils.enums import DiseaseSeverity, PatientDiseaseStatus
+from app.utils.mixins import AutoActivationMixin, ModifiedMixin
 
 
 class PatientDisease(AutoActivationMixin, ModifiedMixin, Base):

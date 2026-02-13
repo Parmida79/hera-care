@@ -3,10 +3,10 @@ from datetime import date
 from sqlalchemy import String, Enum
 from sqlalchemy.orm import relationship, Mapped
 
-from hera_care.utils.enums import Gender, MaritalStatus, BloodGroup
-from hera_care.utils.mixins import AutoActivationMixin, ModifiedMixin
-from hera_care.db.database import Base
-from hera_care.models import mapped_column
+from app.utils.enums import Gender, MaritalStatus, BloodGroup
+from app.utils.mixins import AutoActivationMixin, ModifiedMixin
+from app.db.database import Base
+from app.models import mapped_column
 
 
 class Patient(AutoActivationMixin, ModifiedMixin, Base):

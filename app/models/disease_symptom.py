@@ -1,10 +1,10 @@
 from sqlalchemy import ForeignKey, Enum
 from sqlalchemy.orm import relationship, Mapped
 
-from hera_care.db.database import Base
-from hera_care.models import mapped_column
-from hera_care.utils.enums import DiseaseSeverity
-from hera_care.utils.mixins import ActivationMixin, TimestampMixin
+from app.db.database import Base
+from app.models import mapped_column
+from app.utils.enums import DiseaseSeverity
+from app.utils.mixins import ActivationMixin, TimestampMixin
 
 
 class DiseaseSymptom(ActivationMixin, TimestampMixin, Base):

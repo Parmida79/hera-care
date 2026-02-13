@@ -4,10 +4,10 @@ from sqlalchemy import String, ForeignKey, Enum, JSON, func
 from sqlalchemy.orm import relationship, Mapped
 from typing import Any, Dict
 
-from hera_care.db.database import Base
-from hera_care.models import mapped_column
-from hera_care.utils.enums import EntryType
-from hera_care.utils.mixins import TimestampMixin
+from app.db.database import Base
+from app.models import mapped_column
+from app.utils.enums import EntryType
+from app.utils.mixins import TimestampMixin
 
 
 class MedicalHistory(TimestampMixin, Base):

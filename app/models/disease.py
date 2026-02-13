@@ -3,10 +3,10 @@ from typing import Optional
 from sqlalchemy import String, Enum, ForeignKey
 from sqlalchemy.orm import relationship, Mapped
 
-from hera_care.db.database import Base
-from hera_care.models import mapped_column
-from hera_care.utils.enums import DiseaseType
-from hera_care.utils.mixins import ModifiedMixin, ActivationMixin
+from app.db.database import Base
+from app.models import mapped_column
+from app.utils.enums import DiseaseType
+from app.utils.mixins import ModifiedMixin, ActivationMixin
 
 
 class Disease(ActivationMixin, ModifiedMixin, Base):

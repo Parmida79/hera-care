@@ -3,10 +3,10 @@ from typing import Optional
 from sqlalchemy import ForeignKey, Enum, String
 from sqlalchemy.orm import relationship, Mapped
 
-from hera_care.db.database import Base
-from hera_care.models import mapped_column
-from hera_care.utils.enums import DiseaseAnatomySeverity
-from hera_care.utils.mixins import ActivationMixin, TimestampMixin
+from app.db.database import Base
+from app.models import mapped_column
+from app.utils.enums import DiseaseAnatomySeverity
+from app.utils.mixins import ActivationMixin, TimestampMixin
 
 
 # disease affected anatomy
