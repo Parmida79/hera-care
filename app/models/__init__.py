@@ -9,7 +9,7 @@ from disease_anatomy import DiseaseAnatomy
 from disease_symptom import DiseaseSymptom
 from disease_treatment import DiseaseTreatment
 from medical_history import MedicalHistory
-from patient import Patient
+from member import SuperAdmin, Admin, Patient, Member
 from patient_disease import PatientDisease
 from symptom import Symptom
 from treatment import Treatment, Medication, LifeStyle

@@ -1,12 +1,16 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, event
+from sqlalchemy import DateTime, event
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped, mapped_column
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 class TimestampMixin:
-
-    created_at: datetime = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=utcnow)
 
 
 class ModifiedMixin(TimestampMixin):
@@ -16,9 +20,9 @@ class ModifiedMixin(TimestampMixin):
         __exclude__ = {'title'}
     """
 
-    __exclude__ = set()
+    __exclude__: set = set()
 
-    updated_at: datetime = Column(DateTime, nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     @property
     def last_modification_time(self):
@@ -28,8 +32,7 @@ class ModifiedMixin(TimestampMixin):
     def before_update(mapper, connection, target):
         if not target.object.__exclude__.issubset(target.unmodified):
             return
-
-        target.object.updated_at = datetime.utcnow()
+        target.object.updated_at = utcnow()
 
     @classmethod
     def __declare_last__(cls):
@@ -37,7 +40,7 @@ class ModifiedMixin(TimestampMixin):
 
 
 class ActivationMixin:
-    activated_at: datetime = Column(DateTime, nullable=True)
+    activated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     @hybrid_property
     def is_active(self):
@@ -45,35 +48,28 @@ class ActivationMixin:
 
     @is_active.setter
     def is_active(self, value):
-        self.activated_at = datetime.utcnow() if value else None
+        self.activated_at = utcnow() if value else None
 
     @is_active.expression
-    def is_active(self):
-        return self.activated_at.isnot(None)
+    def is_active(cls):
+        return cls.activated_at.isnot(None)
 
     @classmethod
     def filter_activated(cls, query):
         return query.filter(cls.is_active)
 
-    @classmethod
-    def import_value(cls, column, v):
-        if column.key == cls.is_active.key and not isinstance(v, bool):
-            return str(v).lower() == 'true'
-        return super().import_value(column, v)
-
-
 class AutoActivationMixin(ActivationMixin):
-
-    activated_at: datetime = Column(DateTime, nullable=True, default=datetime.utcnow)
+    activated_at: Mapped[datetime | None] = mapped_column(
+        DateTime, nullable=True, default=utcnow
+    )
 
 
 class DeactivationMixin(ActivationMixin):
-
-    deactivated_at: datetime = Column(DateTime, nullable=True)
+    deactivated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     @ActivationMixin.is_active.setter
     def is_active(self, value):
-        now = datetime.utcnow()
+        now = utcnow()
         if value:
             self.activated_at = now
             self.deactivated_at = None
@@ -83,7 +79,7 @@ class DeactivationMixin(ActivationMixin):
 
 
 class SoftDeleteMixin:
-    removed_at = Column(DateTime, nullable=True)
+    removed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     def assert_is_not_deleted(self):
         if self.is_deleted:
@@ -100,7 +96,7 @@ class SoftDeleteMixin:
     def soft_delete(self, ignore_errors=False):
         if not ignore_errors:
             self.assert_is_not_deleted()
-        self.removed_at = datetime.utcnow()
+        self.removed_at = utcnow()
 
     def soft_undelete(self, ignore_errors=False):
         if not ignore_errors:
