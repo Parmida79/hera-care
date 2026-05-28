@@ -1,8 +1,5 @@
 from pydantic import BaseModel, ConfigDict
 
-from .auth import MemberResponse, LoginBase, SignUpBase, TokenResponse
-
-
 def convert_to_camel(word: str) -> str:
     parts = word.split("_")
     if len(parts) == 1:
@@ -19,3 +16,6 @@ class BaseSerializer(BaseModel):
         from_attributes=True,
         extra="forbid",
     )
+
+from .auth import MemberResponse, LoginBase, SignUpBase, TokenResponse
+from .chat import ChatMessage, PredictionResult, ProgressInfo, ChatResponse

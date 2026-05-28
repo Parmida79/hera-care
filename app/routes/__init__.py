@@ -16,17 +16,17 @@ public_router = APIRouter(prefix='/public/hera-care/v1')
 # auth
 limited_router.include_router(
     limited_auth_router,
-    prefix='/',
+    prefix='',
     tags=['auth'],
 )
 restricted_router.include_router(
     restricted_auth_router,
-    prefix='/',
+    prefix='',
     tags=['auth'],
 )
 public_router.include_router(
     public_auth_router,
-    prefix='/',
+    prefix='',
     tags=['auth'],
 )
 

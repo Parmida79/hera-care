@@ -14,8 +14,6 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.models import Member
-from app.utils import get_current_user_from_token
-
 
 # ---------- Auth config ----------
 SECRET_KEY: str = os.getenv('SECRET_KEY')

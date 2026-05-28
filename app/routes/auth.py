@@ -12,6 +12,7 @@ limited_auth_router = APIRouter()
 public_auth_router = APIRouter()
 restricted_auth_router = APIRouter()
 
+
 @public_auth_router.post('/signup', response_model=MemberResponse)
 def sign_up(
         request: Request,
@@ -53,5 +54,6 @@ def login(payload: LoginBase, db: Session = Depends(get_db)):
 
 
 @restricted_auth_router.get("/me", response_model=MemberResponse)
+@authorize('patient')
 def get_current_profile(current_user: Member = Depends(get_current_user)):
     return current_user
