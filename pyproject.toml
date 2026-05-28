@@ -1,7 +1,20 @@
 [project]
 name = "hera-care"
 version = "0.1.0"
-description = "Health is the most valuable asset each person has! And that is the ultimate goal of this project."
-readme = "README.md"
+description = "Medical advisory system for PCOS detection"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+]
+
+[project.scripts]
+hera-cli = "app.cli:cli"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app", "ml"]
+
+[tool.setuptools.package-data]
+ml = ["data/**/*", "models/**/*"]

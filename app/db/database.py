@@ -9,7 +9,7 @@ load_dotenv()
 
 engine = create_engine(
     os.getenv('DB_URI'),
-    echo=True,
+    echo=False,
     pool_size=10,
     max_overflow=5,
     pool_recycle=3600,

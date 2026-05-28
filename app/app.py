@@ -4,6 +4,10 @@ from pathlib import Path
 from fastapi import FastAPI
 # from fastapi_pagination import add_pagination
 from fastapi_utils.tasks import repeat_every
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from fastapi import Request
 
 from .routes import restricted_router, limited_router, public_router
 
@@ -51,3 +55,13 @@ async def cleanup_old_sessions():
     """Periodic cleanup of old conversation sessions"""
     from app.services import ConversationManager
     ConversationManager.cleanup_old(max_age_minutes=60)
+
+
+# After creating the app
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
+
+# Add route for home page
+@app.get('/', response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
