@@ -52,6 +52,5 @@ class Patient(ModifiedMixin, Member):
     # age could be calculated based on DOB
 
     medical_histories = relationship('MedicalHistory', back_populates='patient', lazy="selectin")
-    chat_sessions = relationship('ChatSession', back_populates='patient', lazy="selectin")
 
     __mapper_args__ = {"polymorphic_identity": "patient"}

@@ -103,6 +103,13 @@ class PCOSPredictor:
                         (today.month, today.day) < (dob.month, dob.day))
             features['Age (yrs)'] = float(age)
 
+        # Calculate BMI if not provided but weight and height are available
+        if 'BMI' not in patient_data or patient_data['BMI'] is None:
+            if 'Weight (Kg)' in patient_data and 'Height(Cm)' in patient_data:
+                weight = float(patient_data['Weight (Kg)'])
+                height = float(patient_data['Height(Cm)'])
+                features['BMI'] = weight / ((height / 100) ** 2)
+
         # Override with provided patient data
         for key, value in patient_data.items():
             if key in features and value is not None and key != 'date_of_birth':

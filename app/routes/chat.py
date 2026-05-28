@@ -79,7 +79,7 @@ async def chat(
         # Get personalized advice
         advice = predictor.get_advice(prediction, probability, state.data)
 
-        # Save to database in background
+        # Save to database in background with session info
         background_tasks.add_task(
             save_assessment_results,
             db,
@@ -87,7 +87,9 @@ async def chat(
             prediction,
             probability,
             state.data,
-            advice
+            advice,
+            message.session_id,  # Pass session_id
+            state.conversation_history  # Pass conversation history
         )
 
         # Format final response
@@ -161,7 +163,9 @@ async def save_assessment_results(
         prediction: int,
         probability: float,
         patient_data: dict,
-        advice: dict
+        advice: dict,
+        session_id: str = None,
+        conversation_history: list = None
 ):
     """Save assessment results to database"""
     try:
@@ -178,18 +182,20 @@ async def save_assessment_results(
                     dob = datetime.strptime(dob, '%Y-%m-%d').date()
                 patient.date_of_birth = dob
 
-            # # Calculate and set date_of_birth from age
-            # if 'Age (yrs)' in patient_data:
-            #     age = int(patient_data['Age (yrs)'])
-            #     patient.date_of_birth = date.today() - relativedelta(years=age)
-
-            # Update weight
+            # Update weight and height
             if 'Weight (Kg)' in patient_data:
                 patient.weight_kg = float(patient_data['Weight (Kg)'])
 
             # Update height
             if 'Height(Cm)' in patient_data:
                 patient.height_cm = float(patient_data['Height(Cm)'])
+
+            # Calculate and save BMI
+            if patient.weight_kg and patient.height_cm:
+                patient.bmi = patient.weight_kg / (
+                            (patient.height_cm / 100) ** 2)
+                # Also update in patient_data for consistency
+                patient_data['BMI'] = patient.bmi
 
             # Set marital status if available
             if 'Marraige Status (Yrs)' in patient_data:
@@ -202,7 +208,31 @@ async def save_assessment_results(
             # Update timestamp
             patient.updated_at = datetime.now(timezone.utc)
 
-        # 2. Clean patient_data before saving (remove non-serializable objects)
+        # 2. Save ChatSession
+        if session_id:
+            from app.models import ChatSession
+
+            chat_session = ChatSession(
+                session_id=session_id,
+                patient_id=patient_id,
+                current_step=len(
+                    conversation_history) if conversation_history else 0,
+                total_steps=12,  # Update based on your actual question count
+                is_completed=True,
+                conversation_data={
+                    "messages": conversation_history or [],
+                    "collected_data": patient_data
+                },
+                prediction_result={
+                    "prediction": prediction,
+                    "probability": float(probability),
+                    "advice": advice
+                },
+                completed_at=datetime.now(timezone.utc)
+            )
+            db.add(chat_session)
+
+        # 3. Clean patient_data before saving (remove non-serializable objects)
         clean_patient_data = {}
         for key, value in patient_data.items():
             if isinstance(value, date) and not isinstance(value, datetime):
@@ -210,7 +240,7 @@ async def save_assessment_results(
             else:
                 clean_patient_data[key] = value
 
-        # 3. Save to medical history with clean data
+        # 4. Save to medical history with clean data
         history_entry = MedicalHistory(
             patient_id=patient_id,
             entry_type=EntryType.NOTE,
@@ -226,20 +256,34 @@ async def save_assessment_results(
         )
         db.add(history_entry)
 
-        # 4. Save vital signs as separate entries
-        if 'BP _Systolic (mmHg)' in patient_data and 'BP_ Diastolic (mmHg)' in patient_data:
+        # 5. Save vital signs as separate entries
+        if 'BP _Systolic (mmHg)' in patient_data and 'BP _Diastolic (mmHg)' in patient_data:
             bp_entry = MedicalHistory(
                 patient_id=patient_id,
                 entry_type=EntryType.VITAL,
                 value={
                     "type": "blood_pressure",
                     "systolic": patient_data['BP _Systolic (mmHg)'],
-                    "diastolic": patient_data['BP_ Diastolic (mmHg)'],
+                    "diastolic": patient_data['BP _Diastolic (mmHg)'],
                     "unit": "mmHg"
                 },
                 source="chatbot_assessment"
             )
             db.add(bp_entry)
+
+        # BMI as vital sign
+        if patient.bmi:
+            bmi_entry = MedicalHistory(
+                patient_id=patient_id,
+                entry_type=EntryType.VITAL,
+                value={
+                    "type": "bmi",
+                    "value": float(patient.bmi),
+                    "unit": "kg/m²"
+                },
+                source="chatbot_assessment"
+            )
+            db.add(bmi_entry)
 
         # Pulse rate
         if 'Pulse rate(bpm)' in patient_data:
@@ -269,7 +313,7 @@ async def save_assessment_results(
             )
             db.add(rr_entry)
 
-        # 5. Save lab results
+        # 6. Save lab results
         lab_tests = [
             'FSH(mIU/mL)', 'LH(mIU/mL)', 'TSH (mIU/L)',
             'AMH(ng/mL)', 'PRL(ng/mL)', 'Vit D3 (ng/mL)',
@@ -292,7 +336,7 @@ async def save_assessment_results(
                 )
                 db.add(lab_entry)
 
-        # 6. If PCOS detected, create/update disease records
+        # 7. If PCOS detected, create/update disease records
         if prediction == 1:
             # Get or create PCOS disease with correct ICD-10 code
             pcos_disease = db.query(Disease).filter(
@@ -350,7 +394,8 @@ async def save_assessment_results(
                     severity=severity,
                     status=PatientDiseaseStatus.ACTIVE,
                     notes=f"تشخیص از طریق سیستم هوشمند با اطمینان {probability * 100:.1f}٪.\n" +
-                          f"علائم مشاهده شده: {', '.join(symptoms) if symptoms else 'هیچ'}"
+                          f"علائم مشاهده شده: {', '.join(symptoms) if symptoms else 'هیچ'}\n" +
+                          f"BMI: {patient.bmi:.2f}" if patient.bmi else ""
                 )
                 db.add(patient_disease)
 
