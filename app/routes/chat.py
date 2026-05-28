@@ -1,5 +1,4 @@
 from datetime import date, datetime, timezone
-from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 
@@ -172,10 +171,17 @@ async def save_assessment_results(
             # Set gender (PCOS only affects women)
             patient.gender = Gender.FEMALE
 
-            # Calculate and set date_of_birth from age
-            if 'Age (yrs)' in patient_data:
-                age = int(patient_data['Age (yrs)'])
-                patient.date_of_birth = date.today() - relativedelta(years=age)
+            # Set date_of_birth directly from patient_data
+            if 'date_of_birth' in patient_data:
+                dob = patient_data['date_of_birth']
+                if isinstance(dob, str):
+                    dob = datetime.strptime(dob, '%Y-%m-%d').date()
+                patient.date_of_birth = dob
+
+            # # Calculate and set date_of_birth from age
+            # if 'Age (yrs)' in patient_data:
+            #     age = int(patient_data['Age (yrs)'])
+            #     patient.date_of_birth = date.today() - relativedelta(years=age)
 
             # Update weight
             if 'Weight (Kg)' in patient_data:
@@ -196,7 +202,15 @@ async def save_assessment_results(
             # Update timestamp
             patient.updated_at = datetime.now(timezone.utc)
 
-        # 2. Save to medical history
+        # 2. Clean patient_data before saving (remove non-serializable objects)
+        clean_patient_data = {}
+        for key, value in patient_data.items():
+            if isinstance(value, date) and not isinstance(value, datetime):
+                clean_patient_data[key] = value.isoformat()
+            else:
+                clean_patient_data[key] = value
+
+        # 3. Save to medical history with clean data
         history_entry = MedicalHistory(
             patient_id=patient_id,
             entry_type=EntryType.NOTE,
@@ -204,7 +218,7 @@ async def save_assessment_results(
                 "assessment_type": "PCOS_screening",
                 "prediction": prediction,
                 "probability": float(probability),
-                "patient_data": patient_data,
+                "patient_data": clean_patient_data,
                 "advice": advice,
                 "assessment_date": datetime.now(timezone.utc).isoformat()
             },
@@ -212,7 +226,7 @@ async def save_assessment_results(
         )
         db.add(history_entry)
 
-        # 3. Save vital signs as separate entries
+        # 4. Save vital signs as separate entries
         if 'BP _Systolic (mmHg)' in patient_data and 'BP_ Diastolic (mmHg)' in patient_data:
             bp_entry = MedicalHistory(
                 patient_id=patient_id,
@@ -255,7 +269,7 @@ async def save_assessment_results(
             )
             db.add(rr_entry)
 
-        # 4. Save lab results
+        # 5. Save lab results
         lab_tests = [
             'FSH(mIU/mL)', 'LH(mIU/mL)', 'TSH (mIU/L)',
             'AMH(ng/mL)', 'PRL(ng/mL)', 'Vit D3 (ng/mL)',
@@ -278,7 +292,7 @@ async def save_assessment_results(
                 )
                 db.add(lab_entry)
 
-        # 5. If PCOS detected, create/update disease records
+        # 6. If PCOS detected, create/update disease records
         if prediction == 1:
             # Get or create PCOS disease with correct ICD-10 code
             pcos_disease = db.query(Disease).filter(

@@ -1,3 +1,4 @@
+import json
 import os
 
 from dotenv import load_dotenv
@@ -15,7 +16,11 @@ engine = create_engine(
     pool_recycle=3600,
     pool_pre_ping=True,
     pool_use_lifo=True,
-    connect_args={"options": "-c timezone=utc"}
+    connect_args={
+        "options": "-c timezone=utc",
+        "client_encoding": "utf8"
+    },
+    json_serializer=lambda obj: json.dumps(obj, ensure_ascii=False)
 )
 
 Base = declarative_base()

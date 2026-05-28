@@ -90,9 +90,22 @@ class PCOSPredictor:
         # Start with default values
         features = self.default_values.copy()
 
+        # Calculate age from date_of_birth if provided
+        if 'date_of_birth' in patient_data:
+            from datetime import date
+            dob = patient_data['date_of_birth']
+            if isinstance(dob, str):
+                from datetime import datetime
+                dob = datetime.strptime(dob, '%Y-%m-%d').date()
+
+            today = date.today()
+            age = today.year - dob.year - (
+                        (today.month, today.day) < (dob.month, dob.day))
+            features['Age (yrs)'] = float(age)
+
         # Override with provided patient data
         for key, value in patient_data.items():
-            if key in features and value is not None:
+            if key in features and value is not None and key != 'date_of_birth':
                 features[key] = value
 
         # Create DataFrame with correct column order

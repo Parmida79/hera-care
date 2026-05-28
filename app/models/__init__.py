@@ -9,6 +9,7 @@ def mapped_column(*args: Any, **kwargs: Any):
 
 # import models
 from .anatomy import Anatomy
+from .chat_session import ChatSession
 from .disease import Disease
 from .disease_anatomy import DiseaseAnatomy
 from .disease_symptom import DiseaseSymptom

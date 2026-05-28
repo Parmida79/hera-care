@@ -29,6 +29,15 @@ class ConversationState:
                                                       'no']
             },
             {
+                "key": "date_of_birth",
+                "question": "تاریخ تولد شما؟ (فرمت: YYYY-MM-DD مثلاً 1995-03-15)",
+                "type": "date",
+                "required": True,
+                "validation": lambda x: self._validate_date(x),
+                "error_message": "لطفاً تاریخ معتبر وارد کنید (مثال: 1995-03-15)",
+                "transform": lambda x: self._parse_date(x)
+            },
+            {
                 "key": "Age (yrs)",
                 "question": "سن شما چند سال است؟",
                 "type": "numeric",
@@ -125,6 +134,23 @@ class ConversationState:
             },
             # Add more questions as needed for all 41 features
         ]
+
+    def _validate_date(self, date_str: str) -> bool:
+        """Validate date format and range"""
+        try:
+            from datetime import datetime
+            date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+            # Check age range (15-60 years old)
+            today = datetime.now().date()
+            age = (today - date_obj).days / 365.25
+            return 15 <= age <= 60
+        except:
+            return False
+
+    def _parse_date(self, date_str: str):
+        """Parse date string to date object"""
+        from datetime import datetime
+        return datetime.strptime(date_str, '%Y-%m-%d').date()
 
     def update(self, key: str, value: Any):
         """Update conversation data with validation"""

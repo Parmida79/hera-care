@@ -47,9 +47,11 @@ class Patient(ModifiedMixin, Member):
     blood_group: Mapped[str] = mapped_column(Enum(BloodGroup), default=BloodGroup.UNKNOWN)
     weight_kg: Mapped[float] = mapped_column(nullable=True)
     height_cm: Mapped[float] = mapped_column(nullable=True)
+    bmi: Mapped[float] = mapped_column(nullable=True)
     # BMI should be calculated based on weight and height
     # age could be calculated based on DOB
 
     medical_histories = relationship('MedicalHistory', back_populates='patient', lazy="selectin")
+    chat_sessions = relationship('ChatSession', back_populates='patient', lazy="selectin")
 
     __mapper_args__ = {"polymorphic_identity": "patient"}
