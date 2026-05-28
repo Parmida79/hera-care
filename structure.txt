@@ -1,0 +1,83 @@
+.
+├── app
+│   ├── app.py
+│   ├── db
+│   │   ├── database.py
+│   │   └── __init__.py
+│   ├── __init__.py
+│   ├── models
+│   │   ├── anatomy.py
+│   │   ├── disease_anatomy.py
+│   │   ├── disease.py
+│   │   ├── disease_symptom.py
+│   │   ├── disease_treatment.py
+│   │   ├── __init__.py
+│   │   ├── medical_history.py
+│   │   ├── member.py
+│   │   ├── patient_disease.py
+│   │   ├── symptom.py
+│   │   └── treatment.py
+│   ├── routes
+│   │   ├── auth.py
+│   │   ├── chat.py
+│   │   ├── __init__.py
+│   │   └── test.py
+│   ├── schemas
+│   │   ├── auth.py
+│   │   ├── chat.py
+│   │   └── __init__.py
+│   ├── services
+│   │   ├── conversation_manager.py
+│   │   └── __init__.py
+│   └── utils
+│       ├── authentication.py
+│       ├── enums.py
+│       ├── __init__.py
+│       └── mixins.py
+├── docker-compose.yml
+├── hera_care
+│   ├── bin
+│   │   ├── activate
+│   │   ├── activate.bat
+│   │   ├── activate.csh
+│   │   ├── activate.fish
+│   │   ├── activate.nu
+│   │   ├── activate.ps1
+│   │   ├── activate_this.py
+│   │   ├── deactivate.bat
+│   │   ├── pydoc.bat
+│   │   ├── python -> /home/parmida-sazegari/.local/share/uv/python/cpython-3.13.11-linux-x86_64-gnu/bin/python3.13
+│   │   ├── python3 -> python
+│   │   └── python3.13 -> python
+│   ├── CACHEDIR.TAG
+│   ├── lib
+│   │   └── python3.13
+│   │       └── site-packages
+│   │           ├── _virtualenv.pth
+│   │           └── _virtualenv.py
+│   ├── lib64 -> lib
+│   └── pyvenv.cfg
+├── main.py
+├── ml
+│   ├── data
+│   │   ├── cleaned
+│   │   │   └── cleaned_PCOS_infertility.csv
+│   │   ├── processed
+│   │   │   └── pcos_xgb_model.pkl
+│   │   └── raw
+│   │       ├── raw_PCOS_data_without_infertility.xlsx
+│   │       └── raw_PCOS_infertility.csv
+│   ├── __init__.py
+│   ├── models
+│   │   ├── __init__.py
+│   │   └── xgboost.ipynb
+│   └── notebooks
+│       ├── preparation.ipynb
+│       └── visualization.ipynb
+├── pyproject.toml
+├── README.md
+├── requirements.txt
+├── structure.txt
+└── uv.lock
+
+21 directories, 60 files

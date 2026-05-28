@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 # from fastapi_pagination import add_pagination
+from fastapi_utils.tasks import repeat_every
 
 from .routes import restricted_router, limited_router, public_router
 
@@ -42,3 +43,11 @@ app.include_router(limited_router)
 app.include_router(public_router)
 
 # add_pagination(app)
+
+# Add to your FastAPI app initialization
+@app.on_event("startup")
+@repeat_every(seconds=60 * 30)  # Run every 30 minutes
+async def cleanup_old_sessions():
+    """Periodic cleanup of old conversation sessions"""
+    from app.services import ConversationManager
+    ConversationManager.cleanup_old(max_age_minutes=60)
