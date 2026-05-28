@@ -43,8 +43,8 @@ class Patient(ModifiedMixin, Member):
     last_name: Mapped[str] = mapped_column(String(255), nullable=True)
     date_of_birth: Mapped[date] = mapped_column(nullable=True)
     gender: Mapped[str] = mapped_column(Enum(Gender), nullable=True)
-    marital_status: Mapped[str] = mapped_column(Enum(MaritalStatus), default='Unknown')
-    blood_group: Mapped[str] = mapped_column(Enum(BloodGroup), default='unknown')
+    marital_status: Mapped[str] = mapped_column(Enum(MaritalStatus), default=MaritalStatus.UNKNOWN)
+    blood_group: Mapped[str] = mapped_column(Enum(BloodGroup), default=BloodGroup.UNKNOWN)
     weight_kg: Mapped[float] = mapped_column(nullable=True)
     height_cm: Mapped[float] = mapped_column(nullable=True)
     # BMI should be calculated based on weight and height

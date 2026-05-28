@@ -1,13 +1,12 @@
 import tomllib
 from pathlib import Path
 
-from fastapi import FastAPI
-# from fastapi_pagination import add_pagination
-from fastapi_utils.tasks import repeat_every
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
-from fastapi import Request
+from fastapi_utils.tasks import repeat_every
+from starlette.middleware.cors import CORSMiddleware
 
 from .routes import restricted_router, limited_router, public_router
 
@@ -39,29 +38,33 @@ app = FastAPI(
     }
 )
 
-# user
+# Mount static files FIRST (before routers)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
+
+# Then include API routers
 app.include_router(restricted_router)
-# admin dashboard
 app.include_router(limited_router)
-# public apis
 app.include_router(public_router)
 
-# add_pagination(app)
+# Home page route
+@app.get('/', response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-# Add to your FastAPI app initialization
+# Cleanup task
 @app.on_event("startup")
-@repeat_every(seconds=60 * 30)  # Run every 30 minutes
+@repeat_every(seconds=60 * 30)
 async def cleanup_old_sessions():
     """Periodic cleanup of old conversation sessions"""
     from app.services import ConversationManager
     ConversationManager.cleanup_old(max_age_minutes=60)
 
-
-# After creating the app
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
-templates = Jinja2Templates(directory="app/templates")
-
-# Add route for home page
-@app.get('/', response_class=HTMLResponse)
-async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+# Add after creating app
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify exact origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
