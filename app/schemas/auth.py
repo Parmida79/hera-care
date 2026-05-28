@@ -2,7 +2,7 @@ import re
 from typing import Optional
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, Field, EmailStr, field_validator
+from pydantic import Field, EmailStr, field_validator
 
 from app.schemas import BaseSerializer
 
@@ -33,7 +33,7 @@ class SignUpBase(BaseSerializer):
         return v
 
 
-class MemberResponse(BaseModel):
+class MemberResponse(BaseSerializer):
     id: int
     username: str
     role: str
@@ -42,6 +42,6 @@ class MemberResponse(BaseModel):
     is_active: bool
 
 
-class TokenResponse(BaseModel):
+class TokenResponse(BaseSerializer):
     access_token: str
     token_type: str = "bearer"
