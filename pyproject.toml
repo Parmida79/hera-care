@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Medical advisory system for PCOS detection"
 requires-python = ">=3.13"
 dependencies = [
+    "python-dateutil>=2.9.0.post0",
 ]
 
 [project.scripts]

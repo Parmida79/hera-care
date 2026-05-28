@@ -8,6 +8,60 @@ let authToken = localStorage.getItem('authToken');
 let currentUser = null;
 let chatSessionId = null;
 
+async function apiCall(url, options = {}) {
+    try {
+        const response = await fetch(url, options);
+
+        if (!response.ok) {
+            let errorMessage = 'خطا در ارتباط با سرور';
+
+            // Try to get detailed error from response FIRST
+            try {
+                const errorData = await response.json();
+                if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                }
+            } catch (e) {
+                // Use default error message based on status
+                switch (response.status) {
+                    case 400:
+                        errorMessage = 'درخواست نامعتبر';
+                        break;
+                    case 401:
+                        errorMessage = 'نشست شما منقضی شده است. لطفاً دوباره وارد شوید';
+                        break;
+                    case 403:
+                        errorMessage = 'دسترسی غیرمجاز';
+                        break;
+                    case 404:
+                        errorMessage = 'اطلاعات درخواستی یافت نشد';
+                        break;
+                    case 409:
+                        errorMessage = 'این اطلاعات قبلاً ثبت شده است';
+                        break;
+                    case 422:
+                        errorMessage = 'اطلاعات وارد شده معتبر نیست';
+                        break;
+                    case 500:
+                        errorMessage = 'خطای سرور. لطفاً بعداً تلاش کنید';
+                        break;
+                }
+            }
+
+            const error = new Error(errorMessage);
+            error.status = response.status; // Attach status code
+            throw error;
+        }
+
+        return await response.json();
+    } catch (error) {
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            throw new Error('خطا در ارتباط با سرور. لطفاً اتصال اینترنت خود را بررسی کنید');
+        }
+        throw error;
+    }
+}
+
 // DOM Elements
 const authModal = document.getElementById('authModal');
 const chatModal = document.getElementById('chatModal');
@@ -254,17 +308,15 @@ async function sendMessage() {
     const message = chatInput.value.trim();
     if (!message || !chatSessionId) return;
 
-    // Add user message to chat
     addMessage('user', message);
     chatInput.value = '';
     chatInput.disabled = true;
     sendBtn.disabled = true;
 
-    // Show typing indicator
     const typingId = addTypingIndicator();
 
     try {
-        const response = await fetch(`${API_RESTRICTED}/chat/`, {
+        const data = await apiCall(`${API_RESTRICTED}/chat/`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${authToken}`,
@@ -276,16 +328,8 @@ async function sendMessage() {
             })
         });
 
-        if (!response.ok) {
-            throw new Error('خطا در ارسال پیام');
-        }
-
-        const data = await response.json();
-
-        // Remove typing indicator
         removeTypingIndicator(typingId);
 
-        // Add bot response
         if (data.finished) {
             displayFinalResult(data);
         } else {
@@ -298,8 +342,12 @@ async function sendMessage() {
     } catch (error) {
         removeTypingIndicator(typingId);
         showToast(error.message, 'error');
-        chatInput.disabled = false;
-        sendBtn.disabled = false;
+
+        // Close modal after error
+        setTimeout(() => {
+            chatModal.classList.remove('active');
+            resetChat();
+        }, 3000);  // Give user time to read error
     }
 }
 

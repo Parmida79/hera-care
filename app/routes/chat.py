@@ -1,3 +1,5 @@
+from datetime import date, datetime, timezone
+from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 
@@ -7,7 +9,8 @@ from app.services.pcos_predictor import PCOSPredictor
 from app.db.database import get_db
 from app.models import Patient, PatientDisease, Disease, MedicalHistory
 from app.utils import get_current_user
-from app.utils.enums import EntryType, PatientDiseaseStatus, DiseaseSeverity
+from app.utils.enums import EntryType, PatientDiseaseStatus, DiseaseSeverity, \
+    DiseaseType, Gender, MaritalStatus
 
 chat_router = APIRouter()
 predictor = PCOSPredictor()
@@ -163,7 +166,37 @@ async def save_assessment_results(
 ):
     """Save assessment results to database"""
     try:
-        # Save medical history entry
+        # 1. Update Patient table with collected data
+        patient = db.query(Patient).filter(Patient.id == patient_id).first()
+        if patient:
+            # Set gender (PCOS only affects women)
+            patient.gender = Gender.FEMALE
+
+            # Calculate and set date_of_birth from age
+            if 'Age (yrs)' in patient_data:
+                age = int(patient_data['Age (yrs)'])
+                patient.date_of_birth = date.today() - relativedelta(years=age)
+
+            # Update weight
+            if 'Weight (Kg)' in patient_data:
+                patient.weight_kg = float(patient_data['Weight (Kg)'])
+
+            # Update height
+            if 'Height(Cm)' in patient_data:
+                patient.height_cm = float(patient_data['Height(Cm)'])
+
+            # Set marital status if available
+            if 'Marraige Status (Yrs)' in patient_data:
+                marriage_years = float(patient_data['Marraige Status (Yrs)'])
+                if marriage_years > 0:
+                    patient.marital_status = MaritalStatus.MARRIED
+                else:
+                    patient.marital_status = MaritalStatus.SINGLE
+
+            # Update timestamp
+            patient.updated_at = datetime.now(timezone.utc)
+
+        # 2. Save to medical history
         history_entry = MedicalHistory(
             patient_id=patient_id,
             entry_type=EntryType.NOTE,
@@ -172,44 +205,150 @@ async def save_assessment_results(
                 "prediction": prediction,
                 "probability": float(probability),
                 "patient_data": patient_data,
-                "advice": advice
+                "advice": advice,
+                "assessment_date": datetime.now(timezone.utc).isoformat()
             },
             source="chatbot_assessment"
         )
         db.add(history_entry)
 
-        # If PCOS detected, create patient_disease record
+        # 3. Save vital signs as separate entries
+        if 'BP _Systolic (mmHg)' in patient_data and 'BP_ Diastolic (mmHg)' in patient_data:
+            bp_entry = MedicalHistory(
+                patient_id=patient_id,
+                entry_type=EntryType.VITAL,
+                value={
+                    "type": "blood_pressure",
+                    "systolic": patient_data['BP _Systolic (mmHg)'],
+                    "diastolic": patient_data['BP_ Diastolic (mmHg)'],
+                    "unit": "mmHg"
+                },
+                source="chatbot_assessment"
+            )
+            db.add(bp_entry)
+
+        # Pulse rate
+        if 'Pulse rate(bpm)' in patient_data:
+            pulse_entry = MedicalHistory(
+                patient_id=patient_id,
+                entry_type=EntryType.VITAL,
+                value={
+                    "type": "pulse_rate",
+                    "value": patient_data['Pulse rate(bpm)'],
+                    "unit": "bpm"
+                },
+                source="chatbot_assessment"
+            )
+            db.add(pulse_entry)
+
+        # Respiratory rate
+        if 'RR (breaths/min)' in patient_data:
+            rr_entry = MedicalHistory(
+                patient_id=patient_id,
+                entry_type=EntryType.VITAL,
+                value={
+                    "type": "respiratory_rate",
+                    "value": patient_data['RR (breaths/min)'],
+                    "unit": "breaths/min"
+                },
+                source="chatbot_assessment"
+            )
+            db.add(rr_entry)
+
+        # 4. Save lab results
+        lab_tests = [
+            'FSH(mIU/mL)', 'LH(mIU/mL)', 'TSH (mIU/L)',
+            'AMH(ng/mL)', 'PRL(ng/mL)', 'Vit D3 (ng/mL)',
+            'PRG(ng/mL)', 'RBS(mg/dl)', 'Hb(g/dl)'
+        ]
+
+        for test_name in lab_tests:
+            if test_name in patient_data and patient_data[
+                test_name] is not None:
+                lab_entry = MedicalHistory(
+                    patient_id=patient_id,
+                    entry_type=EntryType.LAB_RESULT,
+                    value={
+                        "test_name": test_name,
+                        "value": float(patient_data[test_name]),
+                        "unit": test_name.split('(')[1].rstrip(
+                            ')') if '(' in test_name else ""
+                    },
+                    source="chatbot_assessment"
+                )
+                db.add(lab_entry)
+
+        # 5. If PCOS detected, create/update disease records
         if prediction == 1:
-            # Get or create PCOS disease
+            # Get or create PCOS disease with correct ICD-10 code
             pcos_disease = db.query(Disease).filter(
-                Disease.code == "PCOS-001"
+                Disease.code == "E28.2"
             ).first()
 
             if not pcos_disease:
                 pcos_disease = Disease(
-                    code="PCOS-001",
-                    name="Polycystic Ovary Syndrome",
-                    type="physical",
+                    code="E28.2",  # ICD-10 code for PCOS
+                    name="Polycystic Ovarian Syndrome",
+                    type=DiseaseType.PHYSICAL,
                     description="سندرم تخمدان پلی‌کیستیک"
                 )
+                pcos_disease.is_active = True
                 db.add(pcos_disease)
                 db.flush()
 
-            # Create patient disease record
-            patient_disease = PatientDisease(
-                patient_id=patient_id,
-                disease_id=pcos_disease.id,
-                severity=DiseaseSeverity.MODERATE if probability > 0.7 else DiseaseSeverity.MILD,
-                status=PatientDiseaseStatus.ACTIVE,
-                notes=f"Detected via chatbot assessment with {probability * 100:.1f}% confidence"
-            )
-            db.add(patient_disease)
+            # Check if patient already has this disease record
+            existing_patient_disease = db.query(PatientDisease).filter(
+                PatientDisease.patient_id == patient_id,
+                PatientDisease.disease_id == pcos_disease.id,
+                PatientDisease.is_active == True
+            ).first()
+
+            if not existing_patient_disease:
+                # Determine severity based on probability
+                if probability > 0.8:
+                    severity = DiseaseSeverity.SEVERE
+                elif probability > 0.6:
+                    severity = DiseaseSeverity.MODERATE
+                else:
+                    severity = DiseaseSeverity.MILD
+
+                # Collect symptoms
+                symptoms = []
+                symptom_fields = {
+                    'Weight gain(Y/N)': 'افزایش وزن',
+                    'hair growth(Y/N)': 'رشد موهای زائد',
+                    'Skin darkening (Y/N)': 'تیره شدن پوست',
+                    'Hair loss(Y/N)': 'ریزش مو',
+                    'Pimples(Y/N)': 'آکنه',
+                    'Cycle(R/I)': 'قاعدگی نامنظم' if patient_data.get(
+                        'Cycle(R/I)') == 1 else None
+                }
+
+                for field, symptom_fa in symptom_fields.items():
+                    if field in patient_data and patient_data[field] == 1:
+                        symptoms.append(symptom_fa)
+
+                # Create patient disease record
+                patient_disease = PatientDisease(
+                    patient_id=patient_id,
+                    disease_id=pcos_disease.id,
+                    diagnosis_date=date.today(),
+                    severity=severity,
+                    status=PatientDiseaseStatus.ACTIVE,
+                    notes=f"تشخیص از طریق سیستم هوشمند با اطمینان {probability * 100:.1f}٪.\n" +
+                          f"علائم مشاهده شده: {', '.join(symptoms) if symptoms else 'هیچ'}"
+                )
+                db.add(patient_disease)
 
         db.commit()
+        print(
+            f"✅ Successfully saved assessment results for patient {patient_id}")
+
     except Exception as e:
         db.rollback()
-        print(f"Error saving assessment results: {e}")
-
+        print(f"❌ Error saving assessment results: {e}")
+        import traceback
+        traceback.print_exc()
 
 async def cleanup_session_delayed(session_id: str):
     """Clean up session after delay"""
