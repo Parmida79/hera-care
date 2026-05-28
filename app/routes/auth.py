@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.utils import authorize, get_current_user, authenticate_user_db, \
+from app.utils import get_current_user, authenticate_user_db, \
     create_access_token, hash_password
 from app.db.database import get_db
 from app.models import Member, Patient
@@ -53,7 +53,15 @@ def login(payload: LoginBase, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@restricted_auth_router.get("/me", response_model=MemberResponse)
-@authorize('patient')
-def get_current_profile(current_user: Member = Depends(get_current_user)):
+@restricted_auth_router.get('/me', response_model=MemberResponse)
+def get_current_profile(
+        request: Request,
+        current_user: Member = Depends(get_current_user)
+):
+    # Only allow patients
+    if current_user.role != 'patient':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="فقط بیماران می‌توانند از این سامانه استفاده کنند"
+        )
     return current_user
