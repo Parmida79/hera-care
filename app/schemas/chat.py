@@ -1,4 +1,5 @@
-from typing import Optional, List
+from typing import Optional, List, Dict
+from pydantic import BaseModel
 
 from app.schemas import BaseSerializer
 
@@ -8,14 +9,14 @@ class ChatMessage(BaseSerializer):
     message: str
 
 
-class PredictionResult(BaseSerializer):
+class PredictionResult(BaseModel):
     has_pcos: bool
     confidence: float
     risk_level: str
     recommendations: List[str]
 
 
-class ProgressInfo(BaseSerializer):
+class ProgressInfo(BaseModel):
     current_step: int
     total_steps: int
     percentage: int
@@ -28,3 +29,4 @@ class ChatResponse(BaseSerializer):
     progress: ProgressInfo
     finished: bool
     prediction: Optional[PredictionResult] = None
+    section_summary: Optional[Dict[str, str]] = None

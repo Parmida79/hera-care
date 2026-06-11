@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>هِرا کِر - سلامت زنان</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -26,12 +26,139 @@
                     <button class="btn btn-primary" id="signupBtn">ثبت نام</button>
                 </div>
                 <div class="user-menu hidden" id="userMenu">
-                    <span class="user-name" id="userName"></span>
-                    <button class="btn btn-outline btn-sm" id="logoutBtn">خروج</button>
+                    <button class="btn btn-outline btn-sm" id="panelBtn">🏥 پنل من</button>
+                    <div class="hamburger-menu" id="hamburgerMenu">
+                        <button class="hamburger-btn" id="hamburgerBtn">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
+                        <div class="hamburger-dropdown hidden" id="hamburgerDropdown">
+                            <div class="dropdown-user-info" id="dropdownUserInfo"></div>
+                            <hr>
+                            <a href="#" class="dropdown-item" id="menuAssessment">🔍 ارزیابی PCOS</a>
+                            <a href="#" class="dropdown-item" id="menuHistory">📋 تاریخچه ارزیابی</a>
+                            <a href="#" class="dropdown-item" id="menuProfile">👤 ویرایش پروفایل</a>
+                            <hr>
+                            <a href="#" class="dropdown-item logout" id="menuLogout">🚪 خروج</a>
+                        </div>
+                    </div>
                 </div>
             </nav>
         </div>
     </header>
+
+        <!-- Patient Panel Modal -->
+    <div class="modal" id="panelModal">
+        <div class="modal-content panel-modal-content">
+            <div class="panel-header">
+                <h3>🏥 پنل بیمار</h3>
+                <span class="close" id="closePanelModal">&times;</span>
+            </div>
+
+            <div class="panel-tabs">
+                <button class="panel-tab active" data-tab="overview">خلاصه</button>
+                <button class="panel-tab" data-tab="profile">پروفایل</button>
+                <button class="panel-tab" data-tab="history">تاریخچه</button>
+                <button class="panel-tab" data-tab="assessments">ارزیابی‌ها</button>
+            </div>
+
+            <div class="panel-body">
+                <!-- Overview Tab -->
+                <div class="panel-tab-content active" id="tabOverview" data-tab="overview">
+                    <div class="overview-cards" id="overviewCards">
+                        <div class="overview-card">
+                            <div class="overview-card-icon">👤</div>
+                            <div class="overview-card-content">
+                                <span class="overview-card-label">نام</span>
+                                <span class="overview-card-value" id="panelName">-</span>
+                            </div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-card-icon">📅</div>
+                            <div class="overview-card-content">
+                                <span class="overview-card-label">تاریخ تولد</span>
+                                <span class="overview-card-value" id="panelDob">-</span>
+                            </div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-card-icon">⚖️</div>
+                            <div class="overview-card-content">
+                                <span class="overview-card-label">وزن</span>
+                                <span class="overview-card-value" id="panelWeight">-</span>
+                            </div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-card-icon">📏</div>
+                            <div class="overview-card-content">
+                                <span class="overview-card-label">قد</span>
+                                <span class="overview-card-value" id="panelHeight">-</span>
+                            </div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-card-icon">📊</div>
+                            <div class="overview-card-content">
+                                <span class="overview-card-label">BMI</span>
+                                <span class="overview-card-value" id="panelBmi">-</span>
+                            </div>
+                        </div>
+                        <div class="overview-card">
+                            <div class="overview-card-icon">💍</div>
+                            <div class="overview-card-content">
+                                <span class="overview-card-label">وضعیت تأهل</span>
+                                <span class="overview-card-value" id="panelMarital">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="last-assessment" id="lastAssessment">
+                        <h4>آخرین ارزیابی</h4>
+                        <p class="no-data">هنوز ارزیابی انجام نشده است</p>
+                    </div>
+                </div>
+
+                <!-- Profile Tab -->
+                <div class="panel-tab-content" id="tabProfile" data-tab="profile">
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label>نام</label>
+                            <input type="text" id="profileFirstName">
+                        </div>
+                        <div class="form-group">
+                            <label>نام خانوادگی</label>
+                            <input type="text" id="profileLastName">
+                        </div>
+                        <div class="form-group">
+                            <label>ایمیل</label>
+                            <input type="email" id="profileEmail">
+                        </div>
+                        <div class="form-group">
+                            <label>شماره تلفن</label>
+                            <input type="tel" id="profilePhone">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">ذخیره تغییرات</button>
+                    </form>
+                </div>
+
+                <!-- History Tab -->
+                <div class="panel-tab-content" id="tabHistory" data-tab="history">
+                    <div class="history-list" id="historyList">
+                        <p class="no-data">تاریخچه‌ای موجود نیست</p>
+                    </div>
+                </div>
+
+                <!-- Assessments Tab -->
+                <div class="panel-tab-content" id="tabAssessments" data-tab="assessments">
+                    <button class="btn btn-primary btn-full mb-2" id="newAssessmentBtn">
+                        🔍 شروع ارزیابی جدید
+                    </button>
+                    <div class="assessments-list" id="assessmentsList">
+                        <p class="no-data">ارزیابی قبلی موجود نیست</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero" id="home">
@@ -204,22 +331,98 @@
     <div class="modal" id="chatModal">
         <div class="modal-content chat-modal-content">
             <div class="chat-header">
-                <h3>ارزیابی PCOS</h3>
-                <div class="chat-actions">
+                <div class="chat-header-top">
+                    <h3>🌸 ارزیابی PCOS</h3>
+                    <span class="close" id="closeChatModal">&times;</span>
+                </div>
+
+                <!-- Section Progress Tracker -->
+                <div class="section-tracker" id="sectionTracker">
+                    <div class="section-step active" data-section="onboarding">
+                        <div class="section-dot">۱</div>
+                    </div>
+                    <div class="section-connector"></div>
+                    <div class="section-step" data-section="symptoms">
+                        <div class="section-dot">۲</div>
+                    </div>
+                    <div class="section-connector"></div>
+                    <div class="section-step" data-section="lifestyle">
+                        <div class="section-dot">۳</div>
+                    </div>
+                    <div class="section-connector"></div>
+                    <div class="section-step" data-section="vitals">
+                        <div class="section-dot">۴</div>
+                    </div>
+                    <div class="section-connector"></div>
+                    <div class="section-step" data-section="lab_results">
+                        <div class="section-dot">۵</div>
+                    </div>
+                    <div class="section-connector"></div>
+                    <div class="section-step" data-section="ultrasound">
+                        <div class="section-dot">۶</div>
+                    </div>
+                </div>
+
+                <!-- Current Section Label -->
+                <div class="current-section-label" id="currentSectionLabel">اطلاعات پایه</div>
+
+                <!-- Overall Progress Bar -->
+                <div class="progress-container">
                     <div class="progress-bar">
                         <div class="progress-fill" id="progressFill"></div>
                     </div>
-                    <span class="close" id="closeChatModal">&times;</span>
+                    <span class="progress-text" id="progressText">۰٪</span>
                 </div>
             </div>
+
             <div class="chat-body" id="chatBody">
                 <div class="chat-welcome">
                     <div class="welcome-icon">🌸</div>
-                    <h4>سلام! خوش آمدید</h4>
-                    <p>برای شروع ارزیابی، روی دکمه زیر کلیک کنید</p>
-                    <button class="btn btn-primary" id="startChatBtn">شروع گفتگو</button>
+                    <h4>ارزیابی هوشمند PCOS</h4>
+                    <p>این ارزیابی شامل ۶ بخش است:</p>
+                    <div class="section-overview">
+                        <div class="overview-item">
+                            <span class="overview-num">۱</span>
+                            <span>اطلاعات پایه</span>
+                            <span class="overview-badge required">الزامی</span>
+                        </div>
+                        <div class="overview-item">
+                            <span class="overview-num">۲</span>
+                            <span>علائم ظاهری</span>
+                            <span class="overview-badge required">الزامی</span>
+                        </div>
+                        <div class="overview-item">
+                            <span class="overview-num">۳</span>
+                            <span>سبک زندگی</span>
+                            <span class="overview-badge required">الزامی</span>
+                        </div>
+                        <div class="overview-item">
+                            <span class="overview-num">۴</span>
+                            <span>علائم حیاتی</span>
+                            <span class="overview-badge optional">اختیاری</span>
+                        </div>
+                        <div class="overview-item">
+                            <span class="overview-num">۵</span>
+                            <span>نتایج آزمایش</span>
+                            <span class="overview-badge optional">اختیاری</span>
+                        </div>
+                        <div class="overview-item">
+                            <span class="overview-num">۶</span>
+                            <span>سونوگرافی</span>
+                            <span class="overview-badge optional">اختیاری</span>
+                        </div>
+                    </div>
+                    <p class="welcome-note">⏱ زمان تقریبی: ۳ تا ۵ دقیقه</p>
+                    <button class="btn btn-primary" id="startChatBtn">شروع ارزیابی</button>
                 </div>
             </div>
+
+            <!-- Quick Reply Buttons (for yes/no questions) -->
+            <div class="quick-replies hidden" id="quickReplies">
+                <button class="btn btn-quick btn-yes" data-value="بله">✓ بله</button>
+                <button class="btn btn-quick btn-no" data-value="خیر">✗ خیر</button>
+            </div>
+
             <div class="chat-footer" id="chatFooter">
                 <input type="text" id="chatInput" placeholder="پاسخ خود را بنویسید..." disabled>
                 <button class="btn btn-primary btn-icon" id="sendBtn" disabled>
@@ -260,6 +463,6 @@
         </div>
     </footer>
 
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=2"></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 import re
+from datetime import date
 from typing import Optional
 
 from fastapi import HTTPException, status
@@ -39,7 +40,15 @@ class MemberResponse(BaseSerializer):
     role: str
     email: Optional[str] = None
     first_name: Optional[str] = None
+    last_name: Optional[str] = None
     is_active: bool
+    date_of_birth: Optional[date] = None
+    weight_kg: Optional[float] = None
+    height_cm: Optional[float] = None
+    bmi: Optional[float] = None
+    gender: Optional[str] = None
+    marital_status: Optional[str] = None
+    phone_number: Optional[str] = None
 
 
 class TokenResponse(BaseSerializer):
